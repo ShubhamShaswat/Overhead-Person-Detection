@@ -2,4 +2,5 @@
 
 Person Detection from Overhead View
 
-Dataset: https://www.kaggle.com/lehomme/geintra-frontal-person-detection-database (currently working on)
+Dataset: https://www.kaggle.com/lehomme/overhead-depth-images-people-detection-gotpd1
+
