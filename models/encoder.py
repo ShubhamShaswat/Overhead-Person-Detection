@@ -5,6 +5,7 @@ import numpy as np
 from tensorflow.keras.layers import (
     Dense, Dropout, Activation, Flatten, Input, BatchNormalization, UpSampling2D, Add, Conv2D, MaxPooling2D, LeakyReLU, Add
 )
+from tensorflow.keras import Model
 
 #Encoding Conv Block
 def encoding_block(x,a,b,c,k):
@@ -18,7 +19,7 @@ def encoding_block(x,a,b,c,k):
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
 	
-	y_shortcut = Conv2D(c, kernel_size=(1 1), strides=(2, 2), padding='same')(x)
+	y_shortcut = Conv2D(c, kernel_size=(1,1), strides=(2, 2), padding='same')(x)
 	y_shortcut = BatchNormalization()(y_shortcut)
 	y_out = Add()([y_shortcut,y])
 	y_out = LeakyReLU(y_out)
@@ -39,6 +40,8 @@ def encoder(shape=(212,256,1)):
 	x = encoding_block(x,a=64,b=64,c=256,k=3)
 	x = encoding_block(x,a=128,b=128,c=512,k=3)
 	x = encoding_block(x,a=256,b=256,c=1024,k=3)
+
+	return Model(inp,x)
 
 
 
