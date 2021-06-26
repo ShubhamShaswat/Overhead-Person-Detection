@@ -22,7 +22,7 @@ def encoding_block(x,a,b,c,k):
 	y_shortcut = Conv2D(c, kernel_size=(1,1), strides=(2, 2), padding='same')(x)
 	y_shortcut = BatchNormalization()(y_shortcut)
 	y_out = Add()([y_shortcut,y])
-	y_out = LeakyReLU(y_out)
+	y_out = LeakyReLU()(y_out)
 
 	return y_out
 
