@@ -6,10 +6,9 @@ from tensorflow.keras.layers import (
     Dense, Dropout, Activation, Flatten, Input, BatchNormalization, UpSampling2D, Add, Conv2D, MaxPooling2D, LeakyReLU, Add
 )
 from tensorflow.keras import Model
-
 #Encoding Conv Block
-def encoding_block(x,a,b,c,k):
-	y = Conv2D(a, kernel_size=(1, 1), strides=(2, 2), padding='same')(x)
+def encoding_block(x,a,b,c,k,s):
+	y = Conv2D(a, kernel_size=(1, 1), strides=(s, s), padding='same')(x)
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
 	y = Conv2D(b, kernel_size=(k, k), strides=(1, 1), padding='same')(y)
@@ -19,7 +18,7 @@ def encoding_block(x,a,b,c,k):
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
 	
-	y_shortcut = Conv2D(c, kernel_size=(1,1), strides=(2, 2), padding='same')(x)
+	y_shortcut = Conv2D(c, kernel_size=(1, 1), strides=(s, s))(x)
 	y_shortcut = BatchNormalization()(y_shortcut)
 	y_out = Add()([y_shortcut,y])
 	y_out = LeakyReLU()(y_out)
@@ -35,11 +34,11 @@ def encoder(shape=(212,256,1)):
 	x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
 	x = BatchNormalization()(x)
 	x = LeakyReLU()(x)
-	x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(x) #doubt about strides value
+	x = MaxPool2D(pool_size=(3, 3))(x) 
 
-	x = encoding_block(x,a=64,b=64,c=256,k=3)
-	x = encoding_block(x,a=128,b=128,c=512,k=3)
-	x = encoding_block(x,a=256,b=256,c=1024,k=3)
+	x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
+	x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
+	x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
 
 	return Model(inp,x)
 
