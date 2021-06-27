@@ -25,6 +25,24 @@ def encoding_block(x,a,b,c,k,s):
 
 	return y_out
 
+#Decoding Conv Block
+def decoder_block(x,a,b,c,k,s):
+    y = UpSampling2D((2, 2))(x)
+    y = Conv2D(a, kernel_size=(1, 1), strides=(1, 1), padding='same')(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    y = Conv2D(b, kernel_size=(k, k), strides=(1, 1), padding='same')(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    y = Conv2D(c, kernel_size=(1, 1), strides=(1, 1), padding='same')(y)
+    y = BatchNormalization()(y)
+    
+    y_shortcut = UpSampling2D((2, 2))(x)
+    y_shortcut = Conv2D(c, kernel_size=(1, 1), strides=(1, 1), padding='same')(y_shortcut)
+    y_shortcut = BatchNormalization()(y_shortcut)
+    y_out = Add()([y_shortcut,y])
+	y_out = LeakyReLU()(y_out)
+    return y_out
 
 ###Main Block
 #encoder 
@@ -39,6 +57,14 @@ def encoder(shape=(212,256,1)):
 	x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
 	x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
 	x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
+
+	x = decoder_block(x,a=1024,b=1024,c=256,s=1)
+    x = decoder_block(x,a=512,b=512,c=128,s=2)
+    x = decoder_block(x,a=256,b=256,c=64,s=2)
+
+    #x  = Cropping2D((2,2),(1,1))(x)
+    #x = 
+
 
 	return Model(inp,x)
 
