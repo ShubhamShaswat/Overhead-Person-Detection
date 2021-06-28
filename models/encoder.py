@@ -47,28 +47,26 @@ def decoder_block(x,a,b,c,k,s):
 ###Main Block
 #encoder 
 def encoder(shape=(212,256,1)):
+    inp = Input(shape=shape)
+    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    x = MaxPooling2D(pool_size=(3, 3))(x)
+    x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
+    x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
+    x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
 
-	inp = Input(shape=shape)
-	x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
-	x = BatchNormalization()(x)
-	x = LeakyReLU()(x)
-	x = MaxPool2D(pool_size=(3, 3))(x) 
-
-	x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
-	x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
-	x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
-
-	x = decoder_block(x,a=1024,b=1024,c=256,s=1)
-    x = decoder_block(x,a=512,b=512,c=128,s=2)
-    x = decoder_block(x,a=256,b=256,c=64,s=2)
-
-    #x  = Cropping2D((2,2),(1,1))(x)
-    #x = 
-
-
-	return Model(inp,x)
-
-
-
+    x = decoder_block(x,a=1024,b=1024,c=256,k=3,s=1)
+    x = decoder_block(x,a=512,b=512,c=128,k=3,s=2)
+    x = decoder_block(x,a=256,b=256,c=64,k=3,s=2)
+    x = Cropping2D([(2,2),(1,1)])(x)#;
+    x = UpSampling2D((3,3))(x)
+    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(x)
+    x = Cropping2D([(2,2),(1,1)])(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    x = Conv2D(1, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
+    return Model(inp,x)
+    
 
 
