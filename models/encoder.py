@@ -9,17 +9,17 @@ from tensorflow.keras.layers import (
 from tensorflow.keras import Model
 #Encoding Conv Block
 def encoding_block(x,a,b,c,k,s):
-	y = Conv2D(a, kernel_size=(1, 1), strides=(s, s), padding='same')(x)
+	y = SeparableConv2D(a, kernel_size=(1, 1), strides=(s, s), padding='same')(x)
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
-	y = Conv2D(b, kernel_size=(k, k), strides=(1, 1), padding='same')(y)
+	y = SeparableConv2D(b, kernel_size=(k, k), strides=(1, 1), padding='same')(y)
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
-	y = Conv2D(c, kernel_size=(1, 1), strides=(1, 1), padding='same')(y)
+	y = SeparableConv2D(c, kernel_size=(1, 1), strides=(1, 1), padding='same')(y)
 	y = BatchNormalization()(y)
 	y = LeakyReLU()(y)
 	
-	y_shortcut = Conv2D(c, kernel_size=(1, 1), strides=(s, s))(x)
+	y_shortcut = SeparableConv2D(c, kernel_size=(1, 1), strides=(s, s))(x)
 	y_shortcut = BatchNormalization()(y_shortcut)
 	y_out = Add()([y_shortcut,y])
 	y_out = LeakyReLU()(y_out)
