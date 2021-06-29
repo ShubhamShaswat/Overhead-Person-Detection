@@ -3,8 +3,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.layers import (
-    Dense, Dropout, Activation, Flatten, Input, BatchNormalization, UpSampling2D, Add, Conv2D, MaxPooling2D, LeakyReLU, Add,
-    SeparableConv2D, Cropping2D, Conv2DTranspose 
+    Dense, Dropout, Activation, Flatten, Input, BatchNormalization, UpSampling2D, Add, Conv2D, MaxPooling2D, LeakyReLU, Add
 )
 from tensorflow.keras import Model
 #Encoding Conv Block
@@ -49,7 +48,7 @@ def decoder_block(x,a,b,c,k,s):
 
 ###Main Block
 #encoder 
-def encoder(shape=(212,256,1)):
+def refinement(shape=(212,256,1)):
     inp = Input(shape=shape)
     x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
     x = BatchNormalization()(x)
@@ -57,12 +56,11 @@ def encoder(shape=(212,256,1)):
     x = MaxPooling2D(pool_size=(3, 3))(x)
     x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
     x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
-    x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
+    
 
     x = decoder_block(x,a=1024,b=1024,c=256,k=3,s=1)
-
     x = decoder_block(x,a=512,b=512,c=128,k=3,s=2)
-    x = decoder_block(x,a=256,b=256,c=64,k=3,s=2)
+   
     x = Cropping2D([(0,0),(0,1)])(x)
     
     x = UpSampling2D((3,3))(x)
@@ -72,6 +70,5 @@ def encoder(shape=(212,256,1)):
     x = BatchNormalization()(x)
     x = LeakyReLU()(x)
     x = Conv2DTranspose(1, kernel_size=(3, 3), padding='same')(x)
-    x = Activation('sigmoid')(x)
     
     return Model(inp,x)
