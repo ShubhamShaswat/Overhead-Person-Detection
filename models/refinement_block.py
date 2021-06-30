@@ -49,7 +49,7 @@ def decoder_block(x,a,b,c,k,s):
 
 ###Main Block
 #encoder 
-def refinement(shape=(212,256,1)):
+def refinement(shape=(212,256,2)):
     inp = Input(shape=shape)
     x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
     x = BatchNormalization()(x)
