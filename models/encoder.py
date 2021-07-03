@@ -49,8 +49,8 @@ def decoder_block(x,a,b,c,k,s):
 
 ###Main Block
 #encoder 
-def encoder(shape=(212,256,1)):
-    inp = Input(shape=shape)
+def encoder(inp):
+    #inp = Input(shape=shape)
     x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
     x = BatchNormalization()(x)
     x = LeakyReLU()(x)
@@ -74,4 +74,4 @@ def encoder(shape=(212,256,1)):
     x = Conv2DTranspose(1, kernel_size=(3, 3), padding='same')(x)
     x = Activation('sigmoid')(x)
     
-    return Model(inp,x)
+    return x

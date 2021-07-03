@@ -3,6 +3,115 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 #from model import dpdnet 
 
+from tensorflow.keras.layers import (
+    Dense, Dropout, Activation, Flatten, Input, BatchNormalization, UpSampling2D, Add, Conv2D, MaxPooling2D, LeakyReLU, Add,
+    SeparableConv2D, Cropping2D, Conv2DTranspose, ZeroPadding2D
+)
+from tensorflow.keras import Model
+
+##----------------------------------------------------------------------------DPDNET MDOEL----------------------------------------------------
+#Encoding Conv Block
+def encoding_block(x,a,b,c,k,s):
+    y = SeparableConv2D(a, kernel_size=(1, 1), strides=(s, s), padding='same')(x)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    y = SeparableConv2D(b, kernel_size=(k, k), strides=(1, 1), padding='same')(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    y = SeparableConv2D(c, kernel_size=(1, 1), strides=(1, 1), padding='same')(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    
+    y_shortcut = SeparableConv2D(c, kernel_size=(1, 1), strides=(s, s))(x)
+    y_shortcut = BatchNormalization()(y_shortcut)
+    y_out = Add()([y_shortcut,y])
+    y_out = LeakyReLU()(y_out)
+
+    return y_out
+
+#Decoding Conv Block
+def decoder_block(x,a,b,c,k,s):
+    y = UpSampling2D((s, s))(x)
+    y = SeparableConv2D(a, kernel_size=(1, 1))(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    
+    y = SeparableConv2D(b, kernel_size=(k, k), padding='same')(y)
+    y = BatchNormalization()(y)
+    y = LeakyReLU()(y)
+    
+    y = SeparableConv2D(c, kernel_size=(1, 1))(y)
+    y = BatchNormalization()(y)
+    
+    y_shortcut = UpSampling2D((s, s))(x)
+    y_shortcut = SeparableConv2D(c, kernel_size=(1, 1))(y_shortcut)
+    y_shortcut = BatchNormalization()(y_shortcut)
+    y_out = Add()([y_shortcut,y])
+    y_out = LeakyReLU()(y_out)
+    return y_out
+
+
+###Main Block
+#encoder 
+def main_block(inp):
+    #inp = Input(shape=shape)
+    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    x = MaxPooling2D(pool_size=(3, 3))(x)
+    x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
+    x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
+    x = encoding_block(x,a=256,b=256,c=1024,k=3,s=2)
+
+    x = decoder_block(x,a=1024,b=1024,c=256,k=3,s=1)
+
+    x = decoder_block(x,a=512,b=512,c=128,k=3,s=2)
+    x = decoder_block(x,a=256,b=256,c=64,k=3,s=2)
+    x = Cropping2D([(0,0),(0,1)])(x)
+    
+    x = UpSampling2D((3,3))(x)
+    
+    x = Conv2DTranspose(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(x)
+    x = Cropping2D([(2,2),(1,1)])(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    x = Conv2DTranspose(1, kernel_size=(3, 3), padding='same')(x)
+    x = Activation('sigmoid')(x)
+    
+    return x
+
+###Main Block
+#encoder 
+def refinement_block(inp):
+    #inp = Input(shape=shape)
+    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same')(inp)
+    x = BatchNormalization()(x)
+    x = LeakyReLU()(x)
+    x = MaxPooling2D(pool_size=(3, 3))(x)
+
+    x = encoding_block(x,a=64,b=64,c=256,k=3,s=1)
+    x = encoding_block(x,a=128,b=128,c=512,k=3,s=2)
+   
+    x = decoder_block(x,a=512,b=512,c=128,k=3,s=2)
+    x = decoder_block(x,a=256,b=256,c=64,k=3,s=2)
+
+    x = ZeroPadding2D(padding=(0,1))(x)    
+    x = UpSampling2D((3,3))(x)
+    x = Cropping2D([(2,2),(1,1)])(x)
+    x = Conv2DTranspose(1, kernel_size=(3, 3), padding='same')(x)
+    x = Activation('sigmoid')(x)
+    
+    return x
+
+def dpdnet(shape=(212,256,1)):
+    inp1 = Input(shape=shape)
+    out1 = main_block(inp1)
+    inp2 = tf.keras.layers.Concatenate(axis=-1)([inp1, out1])
+    out2 = refinement_block(inp2)
+    return Model(inp1,[out1,out2])
+
+##------------------------------------------------------------------------------PREPARE DATASET----------------------------------------------------------------
+
 IMAGE_SIZE = [212,256]
 BATCH_SIZE = 32
 AUTO = tf.data.experimental.AUTOTUNE
@@ -54,6 +163,7 @@ def get_dataset(batch_size):
     dataset = dataset.repeat().shuffle(10000).batch(batch_size).prefetch(AUTO)
     return dataset
 
+##-----------------------------------------------------------------------TPU TRAINING-----------------------------------------------------------------------
 with tpu_strategy.scope():
 
         #define model
@@ -93,8 +203,7 @@ def train_step(iterator):
     
     tpu_strategy.run(step_fn, args = (next(iterator),))
 
-
-epochs = 5
+epochs = 2
 steps_per_epoch = 2000
 train_iterator = iter(train_dataset)
 for epoch in range(epochs):
@@ -113,3 +222,5 @@ for epoch in range(epochs):
             )
             print("Seen so far: %s samples" % ((step + 1) * BATCH_SIZE))
         loss_metric.reset_states()
+
+##---------------------------------------------------------MODEL VALIDATION------------------------------------------------------------------------------------
