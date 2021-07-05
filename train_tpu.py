@@ -115,6 +115,7 @@ def dpdnet(shape=(212,256,1)):
 IMAGE_SIZE = [212,256]
 BATCH_SIZE = 32
 AUTO = tf.data.experimental.AUTOTUNE
+EPOCHS = 1
 
 # detect and init the TPU
 tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
@@ -203,7 +204,7 @@ def train_step(iterator):
     
     tpu_strategy.run(step_fn, args = (next(iterator),))
 
-epochs = 2
+epochs = EPOCHS
 steps_per_epoch = 2000
 train_iterator = iter(train_dataset)
 for epoch in range(epochs):
@@ -222,5 +223,9 @@ for epoch in range(epochs):
             )
             print("Seen so far: %s samples" % ((step + 1) * BATCH_SIZE))
         loss_metric.reset_states()
+
+
+#save model
+tf.saved_model.save(model, 'gs://dpdnet_model/july')
 
 ##---------------------------------------------------------MODEL VALIDATION------------------------------------------------------------------------------------
