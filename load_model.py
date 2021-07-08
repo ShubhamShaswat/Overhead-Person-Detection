@@ -23,7 +23,9 @@ img_seq = np.stack(img_seq, axis=0)
 print(img_seq.shape)
 
 
-
+for i in range(740 // 25):
+    predicted = infer(img_seq[i*25:(i+1)*25])
+    print(predicted[0].numpy().shape)
 
 
 ##Below deosn't work with save mdoel
