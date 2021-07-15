@@ -6,5 +6,11 @@ Dataset: https://www.kaggle.com/lehomme/overhead-depth-images-people-detection-g
 
 Paper:https://arxiv.org/pdf/2006.01053.pdf
 
-N
+# Model
+
+DPDNet - based on encoder and decoder architecture 
+
+# Dataset
+
+Dataset Captured Using ToF Camera.In this case it was Xbox Kinect 2.
 
