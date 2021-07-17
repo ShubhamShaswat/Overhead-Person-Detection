@@ -14,3 +14,8 @@ DPDNet - based on encoder and decoder architecture
 
 Dataset Captured Using ToF Camera.In this case it was Xbox Kinect 2.
 
+# Applications
+
+Counting and Tracking people in real time.
+
+
